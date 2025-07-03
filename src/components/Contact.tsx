@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 
@@ -50,7 +49,7 @@ const Contact = () => {
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-md rounded-xl p-6 border border-cyan-500/20">
             <div className="text-3xl mb-4">📧</div>
             <h3 className="text-xl font-semibold text-cyan-400 mb-2">Email</h3>
-            <p className="text-gray-300">support@leadnexus.com</p>
+            <p className="text-gray-300">support@samparkx.com</p>
           </div>
           
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-md rounded-xl p-6 border border-cyan-500/20">

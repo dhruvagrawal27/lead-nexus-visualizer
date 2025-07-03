@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchForm from '../components/lead-generation/SearchForm';
@@ -54,15 +53,32 @@ const LeadGeneration = () => {
       clearTimeout(timeoutId);
 
       if (response.ok) {
-        const data = await response.json();
+        let data = await response.json();
+        // If the response is a string, try to parse it as JSON
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+            console.error('Failed to parse stringified JSON:', e);
+          }
+        }
         console.log('Webhook response:', data); // Debug log
         
-        // Handle both array and single object responses
+        // Handle array, {leads: [...]}, and single object responses
         let processedLeads: Lead[] = [];
         if (Array.isArray(data)) {
-          processedLeads = data;
+          // If the first element is also an array, flatten it
+          if (Array.isArray(data[0])) {
+            processedLeads = data[0];
+          } else {
+            processedLeads = data;
+          }
         } else if (data && typeof data === 'object') {
-          processedLeads = [data];
+          if (Array.isArray(data.leads)) {
+            processedLeads = data.leads;
+          } else {
+            processedLeads = [data];
+          }
         }
         
         console.log('Processed leads:', processedLeads); // Debug log
@@ -102,7 +118,7 @@ const LeadGeneration = () => {
               whileHover={{ scale: 1.05 }}
               className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent"
             >
-              LeadNexus
+              SamparkX
             </motion.a>
             <motion.a
               href="/"

@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 
@@ -50,31 +49,31 @@ const Testimonials = () => {
       name: "Sarah Johnson",
       company: "TechStart Inc.",
       role: "CEO",
-      testimonial: "LeadNexus transformed our sales process. We went from spending hours researching prospects to having qualified leads delivered instantly. Our conversion rate increased by 300%!"
+      testimonial: "SamparkX transformed our sales process. We went from spending hours researching prospects to having qualified leads delivered instantly. Our conversion rate increased by 300%!"
     },
     {
       name: "Michael Chen",
       company: "Growth Marketing Pro",
       role: "Marketing Director",
-      testimonial: "The quality of leads from LeadNexus is outstanding. Every contact we receive is relevant and ready to engage. It's like having a team of researchers working 24/7."
+      testimonial: "The quality of leads from SamparkX is outstanding. Every contact we receive is relevant and ready to engage. It's like having a team of researchers working 24/7."
     },
     {
       name: "Emily Rodriguez",
       company: "SaaS Solutions Ltd",
       role: "Sales Manager",
-      testimonial: "I've tried many lead generation tools, but none come close to LeadNexus. The data accuracy and the futuristic interface make it a joy to use. Highly recommended!"
+      testimonial: "I've tried many lead generation tools, but none come close to SamparkX. The data accuracy and the futuristic interface make it a joy to use. Highly recommended!"
     },
     {
       name: "David Thompson",
       company: "Digital Ventures",
       role: "Founder",
-      testimonial: "LeadNexus helped us scale our outreach efforts dramatically. The AI-powered targeting is incredibly precise, and we're closing deals faster than ever before."
+      testimonial: "SamparkX helped us scale our outreach efforts dramatically. The AI-powered targeting is incredibly precise, and we're closing deals faster than ever before."
     },
     {
       name: "Lisa Park",
       company: "Innovate Corp",
       role: "Business Development",
-      testimonial: "The speed and accuracy of LeadNexus is remarkable. What used to take us weeks now takes minutes. It's revolutionized how we approach lead generation."
+      testimonial: "The speed and accuracy of SamparkX is remarkable. What used to take us weeks now takes minutes. It's revolutionized how we approach lead generation."
     },
     {
       name: "James Wilson",
@@ -98,7 +97,7 @@ const Testimonials = () => {
             What Our Clients Say
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Join thousands of satisfied customers who have transformed their business with LeadNexus.
+            Join thousands of satisfied customers who have transformed their business with SamparkX.
           </p>
         </motion.div>
 

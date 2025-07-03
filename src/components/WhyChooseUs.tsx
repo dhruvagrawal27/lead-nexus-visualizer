@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
@@ -77,10 +76,10 @@ const WhyChooseUs = () => {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-purple-600 bg-clip-text text-transparent">
-            Why Choose LeadNexus?
+            Why Choose SamparkX?
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Experience the next generation of lead generation with cutting-edge technology and unmatched precision.
+            Experience the next generation of lead generation with SamparkX's cutting-edge technology and unmatched precision.
           </p>
         </motion.div>
 
