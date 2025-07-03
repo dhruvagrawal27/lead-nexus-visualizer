@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Float, Text3D, MeshDistortMaterial } from '@react-three/drei';
@@ -173,6 +172,10 @@ const LeadGeneration = () => {
     }, 2000);
 
     try {
+      // Create AbortController for timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutes timeout
+
       const response = await fetch('https://dhruvthc.app.n8n.cloud/webhook-test/d728827d-2772-434f-aef7-68d5111b675f', {
         method: 'POST',
         headers: {
@@ -181,8 +184,11 @@ const LeadGeneration = () => {
         body: JSON.stringify({
           industry: industry,
           location: location
-        })
+        }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -192,7 +198,11 @@ const LeadGeneration = () => {
         setLeads([]);
       }
     } catch (error) {
-      console.error('Error fetching leads:', error);
+      if (error.name === 'AbortError') {
+        console.error('Request timeout after 10 minutes');
+      } else {
+        console.error('Error fetching leads:', error);
+      }
       setLeads([]);
     } finally {
       clearInterval(messageInterval);
@@ -264,6 +274,9 @@ const LeadGeneration = () => {
                   transition={{ duration: 2, repeat: Infinity }}
                   className="w-4 h-4 bg-cyan-400 rounded-full mx-auto"
                 />
+                <p className="text-sm text-gray-400 mt-4">
+                  This may take up to 10 minutes for comprehensive results...
+                </p>
               </div>
             </motion.div>
           ) : !hasSearched ? (
