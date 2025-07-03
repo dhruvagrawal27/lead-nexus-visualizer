@@ -2,16 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import LeadCard from './LeadCard';
-
-interface Lead {
-  companyName: string;
-  exactAddress: string;
-  website: string;
-  phoneNumber: string;
-  emailAddress: string;
-  rating: string;
-  ratingCount: string;
-}
+import { Lead } from '../../types/Lead';
 
 interface ResultsDisplayProps {
   leads: Lead[];

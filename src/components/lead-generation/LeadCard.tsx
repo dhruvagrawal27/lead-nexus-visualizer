@@ -1,16 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-
-interface Lead {
-  companyName: string;
-  exactAddress: string;
-  website: string;
-  phoneNumber: string;
-  emailAddress: string;
-  rating: string;
-  ratingCount: string;
-}
+import { Lead } from '../../types/Lead';
 
 interface LeadCardProps {
   lead: Lead;
@@ -18,7 +9,9 @@ interface LeadCardProps {
 }
 
 const LeadCard = ({ lead, index }: LeadCardProps) => {
-  const emails = lead.emailAddress.split(', ').filter(email => email.trim());
+  const emails = lead.emailAddress && lead.emailAddress !== "Not Available" 
+    ? lead.emailAddress.split(', ').filter(email => email.trim()) 
+    : [];
   
   return (
     <motion.div
@@ -31,9 +24,9 @@ const LeadCard = ({ lead, index }: LeadCardProps) => {
     >
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-xl font-bold text-cyan-400 mb-2">
-          {lead.website && lead.website !== "Not Known" ? (
+          {lead.website && lead.website !== "Not Available" ? (
             <a
-              href={lead.website}
+              href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-cyan-300 transition-colors duration-200"
@@ -45,7 +38,7 @@ const LeadCard = ({ lead, index }: LeadCardProps) => {
           )}
         </h3>
         <div className="text-right">
-          {lead.rating !== "Not Known" && (
+          {lead.rating !== "Not Available" && lead.rating && (
             <div className="text-yellow-400 text-sm">
               ⭐ {lead.rating} ({lead.ratingCount})
             </div>
@@ -54,12 +47,21 @@ const LeadCard = ({ lead, index }: LeadCardProps) => {
       </div>
       
       <div className="space-y-3 text-gray-300">
-        <div>
-          <span className="text-cyan-400 font-medium">Address:</span>
-          <p className="text-sm mt-1">{lead.exactAddress}</p>
-        </div>
+        {lead.category && (
+          <div>
+            <span className="text-cyan-400 font-medium">Category:</span>
+            <p className="text-sm mt-1">{lead.category}</p>
+          </div>
+        )}
         
-        {lead.phoneNumber && (
+        {lead.exactAddress && lead.exactAddress !== "Not Available" && (
+          <div>
+            <span className="text-cyan-400 font-medium">Address:</span>
+            <p className="text-sm mt-1">{lead.exactAddress}</p>
+          </div>
+        )}
+        
+        {lead.phoneNumber && lead.phoneNumber !== "Not Available" && (
           <div>
             <span className="text-cyan-400 font-medium">Phone:</span>
             <a
@@ -88,11 +90,11 @@ const LeadCard = ({ lead, index }: LeadCardProps) => {
           </div>
         )}
         
-        {lead.website && lead.website !== "Not Known" && (
+        {lead.website && lead.website !== "Not Available" && (
           <div>
             <span className="text-cyan-400 font-medium">Website:</span>
             <a
-              href={lead.website}
+              href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
               target="_blank"
               rel="noopener noreferrer"
               className="block text-sm mt-1 hover:text-cyan-400 transition-colors duration-200 truncate"

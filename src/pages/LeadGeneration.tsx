@@ -4,16 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SearchForm from '../components/lead-generation/SearchForm';
 import LoadingOverlay from '../components/lead-generation/LoadingOverlay';
 import ResultsDisplay from '../components/lead-generation/ResultsDisplay';
-
-interface Lead {
-  companyName: string;
-  exactAddress: string;
-  website: string;
-  phoneNumber: string;
-  emailAddress: string;
-  rating: string;
-  ratingCount: string;
-}
+import { Lead } from '../types/Lead';
 
 const LeadGeneration = () => {
   const [industry, setIndustry] = useState('');
@@ -64,9 +55,20 @@ const LeadGeneration = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setLeads(Array.isArray(data) ? data : []);
+        console.log('Webhook response:', data); // Debug log
+        
+        // Handle both array and single object responses
+        let processedLeads: Lead[] = [];
+        if (Array.isArray(data)) {
+          processedLeads = data;
+        } else if (data && typeof data === 'object') {
+          processedLeads = [data];
+        }
+        
+        console.log('Processed leads:', processedLeads); // Debug log
+        setLeads(processedLeads);
       } else {
-        console.error('Failed to fetch leads');
+        console.error('Failed to fetch leads, status:', response.status);
         setLeads([]);
       }
     } catch (error) {
