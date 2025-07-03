@@ -176,7 +176,7 @@ const LeadGeneration = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutes timeout
 
-      const response = await fetch('https://dhruvthc.app.n8n.cloud/webhook-test/d728827d-2772-434f-aef7-68d5111b675f', {
+      const response = await fetch('https://dhruvthc.app.n8n.cloud/webhook/d728827d-2772-434f-aef7-68d5111b675f', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
