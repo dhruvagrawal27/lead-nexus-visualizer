@@ -1,0 +1,829 @@
+{
+  "name": "leads",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        100
+      ],
+      "id": "239a1d02-c74c-4a67-97f3-b7b0cbc28da5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"industry\": \"cyber security\",\n  \"location\": \"mumbai\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -200,
+        100
+      ],
+      "id": "32780c24-8dfc-42a5-9f3a-c5b803d22da9",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.google.com/maps/search/{{ $json.searchParameters.q }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        40
+      ],
+      "id": "f2692c1f-3591-432b-b6e2-99a15daefca7",
+      "name": "HTTP Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawData = $input.first().json.data || '';\n\nlet cleaned = rawData\n\n  // Remove <style>, <noscript>, <link>\n  .replace(/<style[^>]*?>[\\s\\S]*?<\\/style>/gi, '')\n  .replace(/<noscript[^>]*?>[\\s\\S]*?<\\/noscript>/gi, '')\n  .replace(/<link[^>]*?>/gi, '')\n\n  // Remove Unicode escape sequences\n  .replace(/\\\\u[0-9a-fA-F]{4}/g, '')\n\n  // Remove continuous + / - \\ sequences (2 or more)\n  .replace(/[+\\-\\/\\\\]{2,}/g, '')\n\n  // Remove specific unwanted links\n  .replace(/https?:\\/\\/(www\\.)?google\\.[^\\/]+\\/maps\\/preview\\/[^\\s\"'<>]*/gi, '')\n  .replace(/https?:\\/\\/khms0\\.google\\.com\\/[^\\s\"'<>]*/gi, '')\n  .replace(/https?:\\/\\/www\\.gstatic\\.com\\/maps\\/[^\\s\"'<>]*/gi, '')\n\n  // Remove only negative numbers\n  .replace(/-\\d+(\\.\\d+)?/g, '')\n\n  // Remove junk tokens over 30 characters\n  .replace(/\\b[\\w\\d\\-\\/\\\\+]{30,}\\b/g, '')\n\n  // Remove @font-face and font-family CSS\n  .replace(/@font-face\\s*{[^}]*}/gi, '')\n  .replace(/font-family\\s*:[^;]*;/gi, '')\n\n  // Remove \"null\" literals\n  .replace(/\\bnull\\b/gi, '')\n\n  // Remove underscores\n  .replace(/_/g, '')\n\n  // Remove repetitive commas\n  .replace(/(,\\s*){2,}/g, ', ')\n\n  // Remove nested junk bracket arrays with escaped strings\n  .replace(/(\\[\\s*(\\\\?[\"'][^\"']*\\\\?[\"']\\s*,?\\s*)+\\])+(\\],?)+/g, '')\n\n  // Remove known window flags, product IDs, etc.\n  .replace(/window\\.(APPFLAGS|VECTORTOWNFLAGS|DEVMODE|JSVERSION|LOGGINGENDPOINT|PRODUCTID|ESDGURL|WIZglobaldata|google)\\s*=[^;]*;/gi, '')\n\n  // Collapse excess whitespace\n  .replace(/\\s{2,}/g, ' ')\n  .replace(/[\\r\\n\\t]+/g, ' ')\n\n  // Remove everything before first APPINITIALIZATIONSTATE\n  .replace(/^[\\s\\S]*?(APPINITIALIZATIONSTATE)/i, '$1')\n\n  // Remove everything after first </script>\n  .replace(/<\\/script>[\\s\\S]*$/i, '')\n  // Remove everything before the last occurrence of 'gcid'\n  .replace(/^[\\s\\S]*(gcid)/i, '$1')\n\n\n  .trim();\n\nreturn [{ json: { cleaned } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        100
+      ],
+      "id": "add5246b-d5b4-4c0e-95d8-1bb73543638c",
+      "name": "Code",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is raw data from a Google search or maps scrape. The structure is irregular, deeply nested, and contains noise like [], [[]], empty strings, or placeholders. Your task is to extract a leads table ,,,,, {{ $json.cleaned }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a highly accurate Data Extraction model specialized in parsing and cleaning obfuscated, deeply nested raw data strings from web sources like Google Maps or business directories. Your job is to analyze these complex data blobs and extract structured business leads information. Always return your final output in a clean JSON array or leads table from company name , exact address , category ,website , contact information (like phone number and email address [try to get both]) . Ignore empty arrays, placeholders like \"\", [[]], or irrelevant noise. You are expected to infer missing fields where possible but never fabricate data. If URLs appear partially encoded, reconstruct them if logical. Prioritize businesses with valid URLs and recognizable categories."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1920,
+        100
+      ],
+      "id": "5cbd47c5-9cbd-40c8-aaf5-65d8cee25736",
+      "name": "Basic LLM Chain",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1940,
+        240
+      ],
+      "id": "31724c34-9f03-46fb-ac34-62fc3f629154",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "a663oiyp5nUCCwt1",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"Company Name\": \"string (Company's official name)\",\n    \"Exact Address\": \"string (Complete physical address, null if unavailable)\",\n    \"Category\": \"string (Primary business category)\",\n    \"Website\": \"string (Official website URL, null if unavailable)\",\n    \"Contact Information\": {\n      \"Phone Number\": \"string (International format preferred, null if unavailable)\",\n      \"Email Address\": \"string (Valid email, null if unavailable)\"\n    }\n  }\n]\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2060,
+        260
+      ],
+      "id": "c072317b-2e01-4157-ac92-cbd62ad4bdb0",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        2140,
+        380
+      ],
+      "id": "a1596d50-e09f-4964-b534-4f6ed5082563",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "iNCOp20fwRz0ZbWx",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json;\n\nfunction fixWebsite(url) {\n    if (!url) return \"\";\n\n    url = url.trim();\n\n    // Case: URL starts with 'https:' but missing '//'\n    if (url.startsWith(\"https:\") && !url.startsWith(\"https://\")) {\n        url = url.replace(/^https:/, \"https://\");\n    }\n\n    // Case: URL starts with 'http:' but missing '//'\n    if (url.startsWith(\"http:\") && !url.startsWith(\"http://\")) {\n        url = url.replace(/^http:/, \"http://\");\n    }\n\n    // If no protocol, add https://\n    if (!url.startsWith(\"http://\") && !url.startsWith(\"https://\")) {\n        url = \"https://\" + url;\n    }\n\n    // Remove duplicate https:// if present\n    url = url.replace(/^(https?:)https?:\\/\\//, \"$1//\");\n\n    // Optional: Remove trailing slashes\n    url = url.replace(/\\/+$/, \"\");\n\n    return url;\n}\n\nreturn inputData.output.map(lead => ({\n    json: {\n        \"Company Name\": lead[\"Company Name\"],\n        \"Exact Address\": lead[\"Exact Address\"],\n        \"Category\": lead[\"Category\"],\n        \"Website\": fixWebsite(lead[\"Website\"]),\n        \"Phone Number\": lead[\"Contact Information\"][\"Phone Number\"],\n        \"Email Address\": lead[\"Contact Information\"][\"Email Address\"]\n    }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2280,
+        100
+      ],
+      "id": "1903f4bc-700f-43ce-8749-7ab0592f2b72",
+      "name": "Code1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2500,
+        -20
+      ],
+      "id": "da9405c8-f741-47bf-854c-4022d42e5507",
+      "name": "Loop Over Items",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Website }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2620,
+        160
+      ],
+      "id": "1f9828d6-ce87-464a-a933-af4ac3c8d6dc",
+      "name": "HTTP Request1",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n JavaScript Code to Extract Emails from HTML with Company Data Integration\n// Use this in a \"Code\" node in n8n\n\n// Get the HTML content from the previous node\nconst htmlContent = $input.last().json.data;\n\n// Get company data from \"Loop Over Items\" node (adjust node name as needed)\nlet companyData = {};\ntry {\n  // Access company data from the specified node\n  const loopData = $('Loop Over Items').last().json;\n  companyData = {\n    companyName: loopData[\"Company Name\"] || \"\",\n    exactAddress: loopData[\"Exact Address\"] || \"\",\n    category: loopData[\"Category\"] || \"\",\n    website: loopData[\"Website\"] || \"\",\n    phoneNumber: loopData[\"Phone Number\"] || \"\",\n    emailAddress: loopData[\"Email Address\"] || \"\",\n    rating: loopData[\"Rating\"] || 0,\n    ratingCount: loopData[\"Rating Count\"] || 0\n  };\n} catch (error) {\n  // If Loop Over Items node is not available, create empty company data\n  companyData = {\n    companyName: \"\",\n    exactAddress: \"\",\n    category: \"\",\n    website: \"\",\n    phoneNumber: \"\",\n    emailAddress: \"\",\n    rating: 0,\n    ratingCount: 0\n  };\n}\n\n// Validate inputs\nif (!htmlContent) {\n  return [{\n    json: {\n      error: \"No HTML content found in input\",\n      companyData: companyData\n    }\n  }];\n}\n\n// Function to extract emails from HTML\nfunction extractEmailsFromHtml(html) {\n  const emails = new Set(); // Use Set to avoid duplicates\n  \n  // Enhanced email regex pattern that covers most email formats\n  const emailRegex = /\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b/g;\n  \n  // Remove HTML tags and decode HTML entities for better text extraction\n  const cleanText = html\n    .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')   // Remove style tags\n    .replace(/<[^>]*>/g, ' ')                          // Remove HTML tags\n    .replace(/&nbsp;/g, ' ')                           // Replace &nbsp;\n    .replace(/&amp;/g, '&')                            // Replace &amp;\n    .replace(/&lt;/g, '<')                             // Replace &lt;\n    .replace(/&gt;/g, '>')                             // Replace &gt;\n    .replace(/&quot;/g, '\"')                           // Replace &quot;\n    .replace(/&#39;/g, \"'\")                            // Replace &#39;\n    .replace(/&#x27;/g, \"'\")                           // Replace &#x27;\n    .replace(/\\s+/g, ' ')                              // Replace multiple spaces\n    .trim();\n  \n  // Extract emails from cleaned text\n  const matches = cleanText.match(emailRegex);\n  if (matches) {\n    matches.forEach(email => emails.add(email.toLowerCase()));\n  }\n  \n  // Also check for emails in specific HTML attributes\n  const attributePatterns = [\n    /mailto:([^\"'\\s>]+)/gi,           // mailto links\n    /href=[\"']mailto:([^\"']+)[\"']/gi, // href mailto\n    /data-email=[\"']([^\"']+)[\"']/gi,  // data-email attributes\n    /email=[\"']([^\"']+)[\"']/gi,       // email attributes\n    /data-mail=[\"']([^\"']+)[\"']/gi,   // data-mail attributes\n    /\\bemail:\\s*([^\\s<>\"']+)/gi       // email: patterns\n  ];\n  \n  attributePatterns.forEach(pattern => {\n    let match;\n    while ((match = pattern.exec(html)) !== null) {\n      const email = match[1].split('?')[0]; // Remove query parameters\n      if (emailRegex.test(email)) {\n        emails.add(email.toLowerCase());\n      }\n    }\n  });\n  \n  return Array.from(emails);\n}\n\n// Function to validate and clean emails\nfunction validateAndCleanEmails(emails) {\n  const validEmails = [];\n  const invalidEmails = [];\n  \n  // Common invalid patterns to filter out\n  const invalidPatterns = [\n    /\\.(png|jpg|jpeg|gif|svg|css|js|pdf|doc|docx|zip|rar)$/i,\n    /example\\.(com|org|net)/i,\n    /test@/i,\n    /noreply@/i,\n    /no-reply@/i,\n    /donotreply@/i,\n    /@localhost/i,\n    /@test\\./i,\n    /@example\\./i,\n    /@domain\\./i,\n    /admin@admin/i,\n    /user@user/i\n  ];\n  \n  emails.forEach(email => {\n    let isValid = true;\n    \n    // Check against invalid patterns\n    for (const pattern of invalidPatterns) {\n      if (pattern.test(email)) {\n        isValid = false;\n        break;\n      }\n    }\n    \n    // Additional validation\n    if (isValid) {\n      // Check for proper email structure\n      const parts = email.split('@');\n      if (parts.length === 2 && parts[0].length > 0 && parts[1].length > 0) {\n        // Check if domain has at least one dot\n        if (parts[1].includes('.') && parts[1].length > 3) {\n          validEmails.push(email);\n        } else {\n          invalidEmails.push(email);\n        }\n      } else {\n        invalidEmails.push(email);\n      }\n    } else {\n      invalidEmails.push(email);\n    }\n  });\n  \n  return { validEmails, invalidEmails };\n}\n\n// Function to determine email relevance to company\nfunction categorizeEmails(emails, companyData) {\n  const companyEmails = [];\n  const otherEmails = [];\n  \n  if (!companyData.companyName && !companyData.website) {\n    // If no company data, return all as other emails\n    return { companyEmails, otherEmails: emails };\n  }\n  \n  // Extract domain from company website\n  let companyDomain = '';\n  if (companyData.website) {\n    try {\n      const url = new URL(companyData.website.startsWith('http') ? companyData.website : 'https://' + companyData.website);\n      companyDomain = url.hostname.replace('www.', '').toLowerCase();\n    } catch (e) {\n      // Invalid URL, skip domain matching\n    }\n  }\n  \n  // Company name keywords for matching\n  const companyKeywords = companyData.companyName\n    .toLowerCase()\n    .replace(/[^a-z0-9\\s]/g, '')\n    .split(/\\s+/)\n    .filter(word => word.length > 2);\n  \n  emails.forEach(email => {\n    const emailDomain = email.split('@')[1];\n    let isCompanyEmail = false;\n    \n    // Check if email domain matches company domain\n    if (companyDomain && emailDomain === companyDomain) {\n      isCompanyEmail = true;\n    }\n    \n    // Check if email contains company name keywords\n    if (!isCompanyEmail && companyKeywords.length > 0) {\n      const emailLower = email.toLowerCase();\n      for (const keyword of companyKeywords) {\n        if (emailLower.includes(keyword)) {\n          isCompanyEmail = true;\n          break;\n        }\n      }\n    }\n    \n    if (isCompanyEmail) {\n      companyEmails.push(email);\n    } else {\n      otherEmails.push(email);\n    }\n  });\n  \n  return { companyEmails, otherEmails };\n}\n\n// Extract emails from HTML\nconst extractedEmails = extractEmailsFromHtml(htmlContent);\n\n// Validate and clean the extracted emails\nconst { validEmails, invalidEmails } = validateAndCleanEmails(extractedEmails);\n\n// Categorize emails based on company data\nconst { companyEmails, otherEmails } = categorizeEmails(validEmails, companyData);\n\n// Add existing company email if not found in extraction\nconst allCompanyEmails = [...companyEmails];\nif (companyData.emailAddress && \n    companyData.emailAddress.trim() !== '' && \n    !allCompanyEmails.includes(companyData.emailAddress.toLowerCase())) {\n  allCompanyEmails.unshift(companyData.emailAddress.toLowerCase());\n}\n\n// Prepare the output\nconst result = {\n  // Company Information\n  companyData: companyData,\n  \n  // Email Extraction Results\n  extraction: {\n    totalFound: extractedEmails.length,\n    validCount: validEmails.length,\n    invalidCount: invalidEmails.length,\n    extractedAt: new Date().toISOString()\n  },\n  \n  // Categorized Emails\n  emails: {\n    company: {\n      emails: allCompanyEmails,\n      count: allCompanyEmails.length\n    },\n    other: {\n      emails: otherEmails,\n      count: otherEmails.length\n    },\n    invalid: {\n      emails: invalidEmails,\n      count: invalidEmails.length\n    }\n  },\n  \n  // Summary\n  summary: {\n    companyName: companyData.companyName,\n    totalValidEmails: validEmails.length,\n    companyRelatedEmails: allCompanyEmails.length,\n    otherEmails: otherEmails.length,\n    hasCompanyEmail: allCompanyEmails.length > 0\n  }\n};\n\n// Return the comprehensive results\nreturn [{ json: result }];\n\n// Alternative outputs (uncomment as needed):\n\n// Option 1: Return only company-related emails as separate items\n/*\nconst companyEmailItems = allCompanyEmails.map(email => ({\n  json: {\n    email: email,\n    type: 'company',\n    companyName: companyData.companyName,\n    extractedAt: new Date().toISOString()\n  }\n}));\nreturn companyEmailItems.length > 0 ? companyEmailItems : [{ json: { message: \"No company emails found\", companyName: companyData.companyName } }];\n*/\n\n// Option 2: Return all valid emails as separate items with company context\n/*\nconst allEmailItems = validEmails.map(email => ({\n  json: {\n    email: email,\n    type: allCompanyEmails.includes(email) ? 'company' : 'other',\n    companyName: companyData.companyName,\n    companyWebsite: companyData.website,\n    extractedAt: new Date().toISOString()\n  }\n}));\nreturn allEmailItems.length > 0 ? allEmailItems : [{ json: { message: \"No valid emails found\", companyName: companyData.companyName } }];\n*/"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        320
+      ],
+      "id": "576e44d5-a40a-42f0-9102-cb04614b4bb8",
+      "name": "Code2",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/places",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "c8baa350a9e8a48a572bed183697edcbaa1400bb"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.url }}"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        420
+      ],
+      "id": "332a3441-eaf4-4ceb-950f-9978534d3d78",
+      "name": "HTTP Request2",
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input\nconst inputData = $input.all();\n\n// Final Output Array\nconst formattedLeads = [];\n\n// Loop over each search result\nfor (const item of inputData) {\n  const places = item.json.places;\n\n  for (const place of places) {\n    formattedLeads.push({\n      json: {\n        \"Company Name\": place.title || \"\",\n        \"Exact Address\": place.address || \"\",\n        \"Category\": place.category || \"\",\n        \"Website\": place.website || \"\",\n        \"Phone Number\": place.phoneNumber || \"\",\n        \"Email Address\": \"\",   // No email provided in data\n        \"Rating\": place.rating || \"Not Known\",\n        \"Rating Count\": place.ratingCount || \"Not Known\"\n      }\n    });\n  }\n}\n\n// Return the formatted output\nreturn formattedLeads;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2280,
+        500
+      ],
+      "id": "b4cef4ab-1663-42a9-8ca9-34072b9313e4",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all().map(item => item.json);\n\nconst results = [];\n\nfor (const item of data) {\n  \n  const companyData = item.companyData || {};\n  const emailsBlock = item.emails || {};\n  const summary = item.summary || {};\n\n  const allEmails = [\n    ...(emailsBlock.company?.emails || []),\n    ...(emailsBlock.other?.emails || [])\n  ];\n\n  results.push({\n    json: {\n      companyName: companyData.companyName || \"\",\n      exactAddress: companyData.exactAddress || \"\",\n      category: companyData.category || \"\",\n      website: companyData.website || \"\",\n      phoneNumber: companyData.phoneNumber || \"\",\n      emailAddress: allEmails.join(\", \"),\n      rating: companyData.rating || 0,\n      ratingCount: companyData.ratingCount || 0\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2800,
+        140
+      ],
+      "id": "142a79cd-6d48-4527-9d70-1408a653e2dd",
+      "name": "Code5",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Input:\nIndustry : {{ $json.industry }}\nLocation : {{ $json.location }}\n\nTask:\n1. Find all valid pincodes(with there population beacuse your terms give same results of lead some times, so think and respond) for the given location.\n2. Generate search term [used on serper.dev google places] for the given industry combined with each pincode, in the format (you can change the industry with its synonyms like ethical hacking with cyber security):\n   {industry} {pincode} {location}\n3. Sort the generated term in descending order of estimated population for each pincode(do a proper evaluation , as data need to be correct).\n4. Output a JSON array of these terms, sorted by population.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a data enrichment and geo-query agent. Your task is to take an industry and location as input, generate search terms for that industry combined with all valid postal codes (pincodes) of that location, and output a JSON array of these terms. The array should be sorted by estimated population density of the pincode, from highest to lowest."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        760,
+        -20
+      ],
+      "id": "6ea85d04-5ba0-4fc5-a099-7e79df1745d5",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        760,
+        200
+      ],
+      "id": "bf302c37-912e-4709-b61f-20720d11d41e",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "a663oiyp5nUCCwt1",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"terms\": [\n    \"software development chicago 60607\",\n    \"software development chicago 60608\",\n    \"software development chicago 60611\",\n    \"software development chicago 60601\"\n  ],\n  \"details\": [\n    {\n      \"pincode\": \"60607\",\n      \"estimated_population\": 60000,\n      \"terms\": \"software development chicago 60607\"\n    },\n    {\n      \"pincode\": \"60608\",\n      \"estimated_population\": 50000,\n      \"terms\": \"software development chicago 60608\"\n    },\n    {\n      \"pincode\": \"60611\",\n      \"estimated_population\": 45000,\n      \"terms\": \"software development chicago 60611\"\n    },\n    {\n      \"pincode\": \"60601\",\n      \"estimated_population\": 30000,\n      \"terms\": \"software development chicago 60601\"\n    }\n  ]\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        920,
+        160
+      ],
+      "id": "0c2ee81c-97ce-4171-8d9c-0bfa9da13784",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data from previous node\nconst inputData = $input.item.json.output;\n\n// Extract the first 10 URLs\nconst topUrls = inputData.terms.slice(0, 4);\n\n// Return each URL as a separate item\nreturn topUrls.map(url => {\n  return {\n    json: {\n      url: url\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -20
+      ],
+      "id": "3ed6f0fe-375e-4770-88fa-e202edb07800",
+      "name": "Code6"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1340,
+        -20
+      ],
+      "id": "9abbca07-9ad3-4bdd-881f-bc485952ac6f",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "industry",
+        "include": "selectedOtherFields",
+        "fieldsToInclude": "industry, location",
+        "options": {
+          "disableDotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        500,
+        440
+      ],
+      "id": "1648588f-0fa9-445c-b864-2aee5cc7bb7f",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "content": "## Google Maps",
+        "height": 1000,
+        "width": 2440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -100
+      ],
+      "id": "3b4ba432-33c2-47d4-9bfe-c9fc6f9f084d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d728827d-2772-434f-aef7-68d5111b675f",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        80,
+        440
+      ],
+      "id": "e7bb705b-e7f1-4578-9641-582af0c791f8",
+      "name": "Webhook",
+      "webhookId": "d728827d-2772-434f-aef7-68d5111b675f"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        3060,
+        420
+      ],
+      "id": "5e51b617-314e-478d-9fec-386b7eca9a71",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fddde6e2-c186-46bd-a7bb-8e399628b5d4",
+              "name": "industry",
+              "value": "={{ $json.body.industry }}",
+              "type": "string"
+            },
+            {
+              "id": "81dc0034-036a-4126-bf05-79d752f35dd5",
+              "name": "location",
+              "value": "={{ $json.body.location }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        300,
+        440
+      ],
+      "id": "3f345321-acb4-4839-95a6-52679f1d936f",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini-2024-07-18",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini-2024-07-18"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        840,
+        340
+      ],
+      "id": "3d8332a5-cdc4-4570-a5b7-782ed10b7006",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "hvD2eIe9zQv6ilfh",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $input.all().flatMap(item => item.json);\n\n// Helper to normalize field\nconst clean = (val) => val ? String(val).trim() : \"Not Available\";\n\n// Helper to detect fake emails\nconst isFakeEmail = (email) => {\n  return /[a-f0-9]{10,}@sentry/i.test(email) || email.includes(\"sentry.wixpress\") || email.includes(\"example@mysite.com\");\n};\n\nconst seen = new Set();\nconst finalLeads = [];\n\nfor (const lead of leads) {\n\n  const companyName = clean(lead.companyName);\n  const website = clean(lead.website);\n  const phone = clean(lead.phoneNumber);\n  \n  // Handle multiple emails\n  const allEmails = lead.emailAddress ? lead.emailAddress.split(\",\").map(e => clean(e)) : [\"Not Available\"];\n  const validEmails = allEmails.filter(email => email !== \"Not Available\" && !isFakeEmail(email));\n\n  const email = validEmails.join(\", \") || \"Not Available\";\n\n  // Skip absolute null leads\n  if (companyName === \"Not Available\" && website === \"Not Available\" && phone === \"Not Available\" && email === \"Not Available\") {\n    continue;\n  }\n\n  // Create unique key\n  const uniqueKey = `${companyName}|${website}|${phone}|${email}`.toLowerCase();\n\n  if (!seen.has(uniqueKey)) {\n    seen.add(uniqueKey);\n    finalLeads.push({\n      companyName,\n      website,\n      phoneNumber: phone,\n      emailAddress: email,\n      exactAddress: clean(lead.exactAddress),\n      category: clean(lead.category),\n      rating: clean(lead.rating),\n      ratingCount: clean(lead.ratingCount)\n    });\n  }\n}\n\nreturn finalLeads.map(l => ({ json: l }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2940,
+        260
+      ],
+      "id": "58e48952-270e-4907-ae30-a716e9ef5575",
+      "name": "Code4"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "dhruvthc.app.n8n.cloud",
+            "user-agent": "SamparkX-Demo/1.0",
+            "content-length": "53",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "35.232.64.30",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "959ed86e71cac959-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "35.232.64.30, 172.69.58.182",
+            "x-forwarded-host": "dhruvthc.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-17-7798f56955-lhlwv",
+            "x-is-trusted": "yes",
+            "x-real-ip": "35.232.64.30"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "industry": "graphic designer",
+            "location": "delhi"
+          },
+          "webhookUrl": "https://dhruvthc.app.n8n.cloud/webhook/d728827d-2772-434f-aef7-68d5111b675f",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Code6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code6": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5f5b2bd6-7618-49af-b476-7ad47fbecae7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1f063ae3729adce97880313f878fc0adc6af3d920903178b3d91abee05e6bc6e"
+  },
+  "id": "oeQdHRNdxtRB6RoC",
+  "tags": []
+}
